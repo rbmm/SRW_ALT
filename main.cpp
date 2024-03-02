@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-void DoSrwTest(ULONG nLoops, ULONG nThreads);
+ULONG DoSrwTest(ULONG nLoops, ULONG nThreads);
 
 ULONG GetNumberOfProcessors()
 {
@@ -25,6 +25,14 @@ BOOL IsRunOk(NTSTATUS status, ULONG nLoops, ULONG nThreads)
 	swprintf_s(msg, _countof(msg), L"run %u loops with %u threads ?", nLoops, nThreads);
 
 	return MessageBoxW(0, msg, L"Test", MB_ICONQUESTION | MB_OKCANCEL) == IDOK;
+}
+
+void ShowResult(ULONG nLoops)
+{
+	wchar_t msg[0x100];
+	swprintf_s(msg, _countof(msg), L"runned %u loops", nLoops);
+
+	MessageBoxW(0, msg, L"Done !", MB_ICONINFORMATION);
 }
 
 void WINAPI ep(PWSTR pszCmdLine)
@@ -60,8 +68,7 @@ void WINAPI ep(PWSTR pszCmdLine)
 
 	if (IsRunOk(status, nLoops, nThreads))
 	{
-		DoSrwTest(nLoops, nThreads);
-		MessageBoxW(0, 0, L"Done !", MB_ICONINFORMATION);
+		ShowResult(nLoops - DoSrwTest(nLoops, nThreads));
 	}
 
 	ExitProcess(status);

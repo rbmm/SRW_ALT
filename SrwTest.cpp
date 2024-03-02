@@ -1,17 +1,12 @@
 #include "stdafx.h"
 
-#if 1
-#define _USE_PUSH_LOCK_
-#include "pushlock.h"
-#endif
-
 struct ThreadTestData 
 {
 	HANDLE hEvent;
 	SRWLOCK SRWLock = {};
 	LONG numThreads = 1;
 	LONG readCounter = 0;
-	LONG bug = 0;
+	LONG done = 0;
 
 	void EndThread()
 	{
@@ -33,19 +28,14 @@ struct ThreadTestData
 		{
 			if (GetTickCount64() > time)
 			{
-				if (InterlockedExchangeNoFence(&bug, TRUE))
-				{
-					SleepEx(INFINITE, TRUE);
-				}
-				else
+				if (InterlockedExchangeNoFence(&done, TRUE))
 				{
 					MessageBoxW(0, 0, 0, MB_ICONHAND);
+					break;
 				}
-				__debugbreak();
 			}
 
 			SwitchToThread();
-			//Sleep(1);
 		}
 
 		ReleaseSRWLockShared(&SRWLock);
@@ -59,7 +49,7 @@ struct ThreadTestData
 		return 0;
 	}
 
-	void Test(ULONG n)
+	BOOL Test(ULONG n)
 	{
 		if (hEvent = CreateEventW(0, 0, 0, 0))
 		{
@@ -93,19 +83,20 @@ struct ThreadTestData
 
 			CloseHandle(hEvent);
 		}
+
+		return done;
 	}
 };
 
-void DoSrwTest(ULONG nThreads)
+BOOL DoSrwTest(ULONG nThreads)
 {
 	ThreadTestData data;
-	data.Test(nThreads);
+	return data.Test(nThreads);
 }
 
-void DoSrwTest(ULONG nLoops, ULONG nThreads)
+ULONG DoSrwTest(ULONG nLoops, ULONG nThreads)
 {
-	do 
-	{
-		DoSrwTest(nThreads);
-	} while (--nLoops);
+	while (!DoSrwTest(nThreads) && --nLoops);
+
+	return nLoops;
 }
