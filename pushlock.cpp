@@ -6,6 +6,26 @@
 
 #include "pushlock.h"
 
+EXTERN_C_START
+
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
+NtAlertThreadByThreadId(
+						_In_ HANDLE ThreadId
+						);
+
+// rev
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
+NtWaitForAlertByThreadId(
+						 _In_ PVOID Address,
+						 _In_opt_ PLARGE_INTEGER Timeout
+						 );
+
+EXTERN_C_END
+
 ULONG CPushLock::WaitBlock::SpinCount = 0x400;
 
 inline void CPushLock::WaitBlock::Wake()

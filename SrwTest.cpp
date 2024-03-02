@@ -1,14 +1,8 @@
 #include "stdafx.h"
 
 #if 1
+#define _USE_PUSH_LOCK_
 #include "pushlock.h"
-
-#define SRWLOCK CPushLock
-#define AcquireSRWLockExclusive(p)	(p)->AcquireExclusive();
-#define ReleaseSRWLockExclusive(p)	(p)->ReleaseExclusive();
-#define AcquireSRWLockShared(p)	(p)->AcquireShared()
-#define ReleaseSRWLockShared(p)	(p)->ReleaseShared()
-
 #endif
 
 struct ThreadTestData 
@@ -17,6 +11,7 @@ struct ThreadTestData
 	SRWLOCK SRWLock = {};
 	LONG numThreads = 1;
 	LONG readCounter = 0;
+	LONG bug = 0;
 
 	void EndThread()
 	{
@@ -30,26 +25,30 @@ struct ThreadTestData
 	{
 		AcquireSRWLockShared(&SRWLock);
 
-		ULONG n = 0, m = 0, k = InterlockedDecrementNoFence(&readCounter);
+		InterlockedDecrementNoFence(&readCounter);
+
+		ULONG64 time = GetTickCount64() + 1000;
 
 		while (readCounter)
 		{
-			switch (NtYieldExecution())
+			if (GetTickCount64() > time)
 			{
-			case STATUS_SUCCESS:
-				n++;
-				break;
-			case STATUS_NO_YIELD_PERFORMED:
-				m++;
-				break;
-			default:
+				if (InterlockedExchangeNoFence(&bug, TRUE))
+				{
+					SleepEx(INFINITE, TRUE);
+				}
+				else
+				{
+					MessageBoxW(0, 0, 0, MB_ICONHAND);
+				}
 				__debugbreak();
 			}
+
+			SwitchToThread();
+			//Sleep(1);
 		}
 
 		ReleaseSRWLockShared(&SRWLock);
-
-		DbgPrint("%x> %x/%x\n", k, n, m);
 
 		EndThread();
 	}
@@ -101,4 +100,12 @@ void DoSrwTest(ULONG nThreads)
 {
 	ThreadTestData data;
 	data.Test(nThreads);
+}
+
+void DoSrwTest(ULONG nLoops, ULONG nThreads)
+{
+	do 
+	{
+		DoSrwTest(nThreads);
+	} while (--nLoops);
 }

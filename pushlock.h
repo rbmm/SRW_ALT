@@ -54,3 +54,12 @@ public:
 	void ConvertExclusiveToShared();
 
 };
+
+#ifdef _USE_PUSH_LOCK_
+
+#define SRWLOCK CPushLock
+#define AcquireSRWLockExclusive(p)	(p)->AcquireExclusive();
+#define ReleaseSRWLockExclusive(p)	(p)->ReleaseExclusive();
+#define AcquireSRWLockShared(p)		(p)->AcquireShared()
+#define ReleaseSRWLockShared(p)		(p)->ReleaseShared()
+#endif
