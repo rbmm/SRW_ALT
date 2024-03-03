@@ -20,13 +20,13 @@ in comments developer also provide some values from SRW lock during deadlock
 
 really SRW lock have identical [implementation](https://github.com/mic101/windows/blob/master/WRK-v1.2/base/ntos/ex/pushlock.c) and structure as PushLock in kernel
 
-this values (3 is L == Lock bit + W == Waiters present ) and P instead SC suggest that thread ( 25108 on picture )
+this values (3 is **L**ock bit + **W**aiters present ) and **P** instead **SC** suggest that thread ( *25108* on picture )
 
 ![threads stacks](https://i.stack.imgur.com/0z66o.png)
 
 hold lock in exclusive mode instead shared. despite thread ask for shared
 
-and for check this - if we with debugger or bit another code - break thread (25108) from loop - all another threads will be wake from` AcquireSRWLockShared`
+and for check this - if we with debugger or bit another code - break thread (*25108*) from loop - all another threads will be wake from` AcquireSRWLockShared`
 
 at first i create demo project, which show that after child thread release SRW lock (by timeout ), deadlock is gone
 
